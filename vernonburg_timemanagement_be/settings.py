@@ -87,7 +87,7 @@ DATABASES = {
         'NAME': 'time_management',  # Your PostgreSQL database name
         'USER': 'hollyjudge',       # Your PostgreSQL user (this might be your OS username)
         'PASSWORD': 'vernonburg2025', # Your PostgreSQL password
-        'HOST': 'localhost',        # Database server (use 'localhost' for local development)
+        'HOST': 'postgres',        # Database server (use 'localhost' for local development)
         'PORT': '5432',             # Default PostgreSQL port
     }
 }

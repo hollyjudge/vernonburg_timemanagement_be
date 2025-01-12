@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+
+  # PostgreSQL Database for your Django app
+  postgres:
+    container_name: timemanagement_postgres
+    image: postgres:latest  # Use the standard Postgres image instead of postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "time_management"  # Database name (use your existing one)
+      POSTGRES_USER: "hollyjudge"     # Your PostgreSQL user
+      POSTGRES_PASSWORD: "vernonburg2025"  # Your PostgreSQL password
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Use a volume to persist data
+    ports:
+      - "5432:5432"  # Expose Postgres port
+    networks:
+      - timemanagement_network
+
+  # Django Web Service
+  web:
+    build:
+      context: . # Point to the directory where your Dockerfile is
+      dockerfile: Dockerfile  # Ensure this matches your Dockerfile name
+    container_name: timemanagement_django
+    environment:
+      - DATABASE_URL=postgres://hollyjudge:vernonburg2025@postgres:5432/time_management
+    ports:
+      - "8000:8000"  # Expose port for Django to the host
+    volumes:
+      - .:/app  # Map your application files to the container
+    depends_on:
+      - postgres  # Ensure Postgres is started before the web service
+    networks:
+      - timemanagement_network
+
+volumes:
+  db_data:  # Volume for persistent database data
+
+networks:
+  timemanagement_network:
+    driver: bridge  # Ensure the app and database can communicate
