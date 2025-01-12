@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+load_dotenv()
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,8 +29,11 @@ SECRET_KEY = 'django-insecure-rm+7&3^p_6q+l7_kba=wm%w&3vt6xvrn4abvxp8ax7n#w=*_z6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'vernonburg-timesheet-production.up.railway.app',
+]
 
 # Application definition
 
@@ -82,14 +89,7 @@ WSGI_APPLICATION = 'vernonburg_timemanagement_be.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'time_management',  # Your PostgreSQL database name
-        'USER': 'hollyjudge',       # Your PostgreSQL user (this might be your OS username)
-        'PASSWORD': 'vernonburg2025', # Your PostgreSQL password
-        'HOST': 'postgres',        # Database server (use 'localhost' for local development)
-        'PORT': '5432',             # Default PostgreSQL port
-    }
+    'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
 
 # Password validation
