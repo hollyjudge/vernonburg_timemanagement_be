@@ -14,11 +14,12 @@ class Project(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to Django's built-in User model
     category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    color = models.CharField(max_length=7, blank=True, null=True)  
+    
     def __str__(self):
         return self.name
 
-class DailyWorkHour(models.Model):
+class TimesheetEntry(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to Django's built-in User model
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     work_date = models.DateField()
