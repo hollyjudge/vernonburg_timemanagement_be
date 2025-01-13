@@ -10,7 +10,7 @@ class ProjectCategory(models.Model):
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)  # Link to Django's built-in User model
     category = models.ForeignKey(ProjectCategory, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
