@@ -58,8 +58,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True
+# OR to restrict specific origins:
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
+    'https://vernonburgtimesheetmanagement.netlify.app',
 ]
 
 ROOT_URLCONF = 'vernonburg_timemanagement_be.urls'
