@@ -23,6 +23,32 @@ class DeleteTimeEntry(APIView):
         except TimesheetEntry.DoesNotExist:
             return Response({"detail": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
 
+
+class FetchMonthlyData(APIView):
+    def get(self, request):
+        # Use static user (the first user in the database)
+        user = User.objects.first()
+
+        # Parse start_date and end_date from request parameters
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "Missing start_date or end_date"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter entries within the date range
+        entries = TimesheetEntry.objects.filter(work_date__range=[start_date, end_date])
+
+        # Serialize the data and return it
+        serializer = TimesheetEntrySerializer(entries, many=True)
+        return Response(serializer.data)
+    
 class FetchWeeklyData(APIView):
     def get(self, request):
         # Use static user (the first user in the database)
