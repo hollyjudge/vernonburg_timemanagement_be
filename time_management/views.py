@@ -8,18 +8,60 @@ from .serializers import TimesheetEntrySerializer
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.http import JsonResponse
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
+
+@api_view(['POST'])
+def register_user(request):
+    username = request.data.get('username')
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    if not username or not email or not password:
+        return Response({'error': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if User.objects.filter(username=username).exists():
+        return Response({'error': 'Username already taken'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = User.objects.create_user(username=username, email=email, password=password)
+    token, created = Token.objects.get_or_create(user=user)
+
+    return Response({'message': 'User created successfully', 'token': token.key}, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+def logout_user(request):
+    request.user.auth_token.delete()
+    return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
 def get_projects(request):
-    projects = Project.objects.values("id", "name", "color")
-    return JsonResponse(list(projects), safe=False)
+    projects = Project.objects.prefetch_related("tasks").all()
+
+    project_list = [
+        {
+            "id": project.id,
+            "name": project.name,
+            "color": project.color,
+            "is_active": project.is_active,
+            "tasks": [
+                {
+                    "id": task.id,
+                    "task_name": task.task_name
+                }
+                for task in project.tasks.all()
+            ]
+        }
+        for project in projects
+    ]
+
+    return JsonResponse(project_list, safe=False)
 
 class DeleteTimeEntry(APIView):
     def delete(self, request, entry_id, *args, **kwargs):
         try:
-            # Find the time entry by ID
             entry = TimesheetEntry.objects.get(id=entry_id)
             entry.delete()  # Delete the entry
-            return Response({"detail": "Entry deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"detail": "Entry deleted successfully"}, status=status.HTTP_200_OK)
         except TimesheetEntry.DoesNotExist:
             return Response({"detail": "Entry not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -70,27 +112,34 @@ class FetchWeeklyData(APIView):
         return Response(serializer.data)
     
 class SubmitEntry(APIView):
-    def post(self, request):
-        # Ensure we have a valid user in the database
-        user = User.objects.first()  
-        print(f"Received request data: {request.data}") 
-        if user is None:
-            return Response({"detail": "No users found in the database."}, status=status.HTTP_400_BAD_REQUEST)
-        
+    def get_object(self, id):
         try:
-            project = Project.objects.get(id=request.data.get('project'))
-        except Project.DoesNotExist:
-            return Response({"detail": "Project does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+            return TimesheetEntry.objects.get(id=id)
+        except TimesheetEntry.DoesNotExist:
+            return None
 
-        # Set the user ID in the request data
-        request.data['user'] = user.id  # Manually set the user ID in request data
+    def post(self, request):
+        user = User.objects.first()
+        if not user:
+            return Response({"detail": "No users found in the database."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Proceed with normal serialization and saving
+        request.data['user'] = user.id
         serializer = TimesheetEntrySerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            print(f"Saved entry: {serializer.data}")  
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, id):
+        entry = self.get_object(id)
+        if not entry:
+            return Response({"detail": "Entry not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TimesheetEntrySerializer(entry, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

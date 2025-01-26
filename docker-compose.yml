@@ -1,43 +1,45 @@
-version: '3'
-
 services:
-
-  # PostgreSQL Database for your Django app
   postgres:
     container_name: timemanagement_postgres
-    image: postgres:latest  # Use the standard Postgres image instead of postgis
+    image: postgres:latest
     restart: unless-stopped
     environment:
-      POSTGRES_DB: "time_management"  # Database name (use your existing one)
-      POSTGRES_USER: "hollyjudge"     # Your PostgreSQL user
-      POSTGRES_PASSWORD: "vernonburg2025"  # Your PostgreSQL password
+      POSTGRES_DB: "time_management"
+      POSTGRES_USER: "hollyjudge"
+      POSTGRES_PASSWORD: "vernonburg2025"
     volumes:
-      - db_data:/var/lib/postgresql/data  # Use a volume to persist data
-    ports:
-      - "5432:5432"  # Expose Postgres port
+      - db_data:/var/lib/postgresql/data
     networks:
+      - inethi-bridge-traefik
       - timemanagement_network
 
-  # Django Web Service
   web:
     build:
-      context: . # Point to the directory where your Dockerfile is
-      dockerfile: Dockerfile  # Ensure this matches your Dockerfile name
+      context: .
+      dockerfile: Dockerfile
     container_name: timemanagement_django
     environment:
       - DATABASE_URL=postgres://hollyjudge:vernonburg2025@postgres:5432/time_management
-    ports:
-      - "8000:8000"  # Expose port for Django to the host
-    volumes:
-      - .:/app  # Map your application files to the container
     depends_on:
-      - postgres  # Ensure Postgres is started before the web service
+      - postgres
+    volumes:
+      - .:/app 
     networks:
-      - timemanagement_network
-
-volumes:
-  db_data:  # Volume for persistent database data
+      - inethi-bridge-traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.timesheets.rule=Host(`timesheets.costbroadband.net`)"
+      - "traefik.http.routers.timesheets.entrypoints=websecure"
+      - "traefik.http.services.timesheets.loadbalancer.server.port=8000"
+      - "traefik.http.routers.timesheets.tls=true"
 
 networks:
   timemanagement_network:
-    driver: bridge  # Ensure the app and database can communicate
+    driver: bridge
+  inethi-bridge-traefik:
+    external:
+      name: "inethi-bridge-traefik"
+
+volumes:
+  db_data:
+

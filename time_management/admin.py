@@ -3,9 +3,8 @@ from .models import Project, ProjectCategory
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description', 'category', 'owner', 'created_at', 'color']
+    list_display = ['name', 'description', 'category', 'owner', 'created_at', 'color', 'is_active']
 
 @admin.register(ProjectCategory)
 class ProjectCategoryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'description']  # Adjust based on your model's fields
-    
+    list_display = ('main_category', 'sub_category')

@@ -27,11 +27,7 @@ SECRET_KEY = 'django-insecure-rm+7&3^p_6q+l7_kba=wm%w&3vt6xvrn4abvxp8ax7n#w=*_z6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'vernonburg-timesheet-production.up.railway.app',
-]
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -44,25 +40,72 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'time_management',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
+    'django.contrib.sites',
+]
+
+SITE_ID = 1  # Required for django.contrib.sites
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://timesheets.costbroadband.net',
+    'https://vernonburgtimesheetmanagement.netlify.app',
+    'https://firecamp.dev',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-# OR to restrict specific origins:
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',  # Token-based auth for API
+        'rest_framework.authentication.SessionAuthentication',  # Allows session-based login
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Allow public access to endpoints
+    ],
+}
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'https://vernonburgtimesheetmanagement.netlify.app',
+    'https://timesheets.costbroadband.net',
+    'https://firecamp.dev',
+]
+
+CORS_ALLOW_CREDENTIALS = True  # Allow credentials (tokens) to be sent with requests
+
+CSRF_COOKIE_SECURE = True  # Ensure CSRF cookie is only sent over HTTPS
+CSRF_COOKIE_HTTPONLY = True  # Helps prevent cross-site scripting (XSS)
+SESSION_COOKIE_HTTPONLY = True  # Secure session cookies
+SESSION_COOKIE_SECURE = True  
+CSRF_COOKIE_SAMESITE = 'None'  # Allow cross-origin requests
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "Content-Type",
+    "Authorization",
+    "X-CSRFToken",
 ]
 
 ROOT_URLCONF = 'vernonburg_timemanagement_be.urls'
@@ -90,7 +133,12 @@ WSGI_APPLICATION = 'vernonburg_timemanagement_be.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.parse('postgresql://postgres:bRjsfKWvXMPbCAcqyfqaeTsWFTxfdqYr@postgres.railway.internal:5432/railway')
+    'default': dj_database_url.parse(
+        os.getenv(
+            'DATABASE_URL',
+            'postgres://hollyjudge:vernonburg2025@postgres:5432/time_management'
+        )
+    )
 }
 
 # Password validation
@@ -128,6 +176,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
